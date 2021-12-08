@@ -19,6 +19,7 @@ from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
+import aioredis
 import redis
 import uvicorn
 import asyncio
@@ -37,6 +38,7 @@ STREAM_MAX_LEN = 1000
 app = FastAPI()
 stream_name = "garrett"
 r = redis.Redis(host='localhost', port=7777)
+red = aioredis.from_url("redis://localhost:7777")
 
 html = """
 <!DOCTYPE html>
@@ -71,22 +73,29 @@ html = """
     </body>
 </html>
 """
+async def async_xread(last_id):
+    return r.xread({stream_name: last_id}, block=10000)
 
-def get_new_messages(last_id):
+async def get_new_messages(websocket):
     """
     wait for new items on chat stream and
-    send data from server to client over a WebSocket
-    :param websocket:
-    :type websocket:
     """
-    # fetch some previous chat history
-    events = r.xread({'garrett': last_id})
-    return events[0][1:][0]
+    last_id = 0
+    while True:
+        #task = asyncio.create_task(async_xread(last_id))
+        data = await red.xread(streams={stream_name: last_id})
+        if data:
+            messages = data[0][1:][0]
+            for _id, message in messages:
+                await websocket.send_text(str(message))
+                last_id = _id
+                print(last_id)
 
-def post_message(message):
-    stream_name = "garrett"
-    # fetch some previous chat history
-    r.xadd(stream_name, {'message': message})
+
+async def post_new_messages(websocket):
+    while True:
+        message = await websocket.receive_text()
+        r.xadd(stream_name, {'message': message})
 
 
 @app.get("/")
@@ -97,12 +106,7 @@ async def get():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    last_id = 0
-    while True:
-        data = await websocket.receive_text()
-        print(data)
-        post_message(data)
-        messages = get_new_messages(last_id)
-        for _id, message in messages:
-            await websocket.send_text(str(message))
-            last_id = _id
+    task1 = asyncio.create_task(get_new_messages(websocket))
+    task2 = asyncio.create_task(post_new_messages(websocket))
+    await task1
+    await task2
