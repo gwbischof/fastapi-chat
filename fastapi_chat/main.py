@@ -87,7 +87,6 @@ async def get_new_messages(websocket):
             for _id, message in messages:
                 await websocket.send_text(str(message))
                 last_id = _id
-                print(last_id)
 
 
 async def post_new_messages(websocket):
