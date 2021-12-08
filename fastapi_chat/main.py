@@ -1,43 +1,14 @@
-#from fastapi import FastAPI
-#import redis
-
-#app = FastAPI()
-#r = redis.Redis(host='localhost', port=7777)
-#stream_name = "garrett"
-
-#@app.get("/post/{message}")
-#async def post(message : str):
-#    r.xadd(stream_name, {'message': message})
-#    return {"message": message}
-
-#@app.get("/read/{last}")
-#async def read(last: int):
-#    return r.xread({'garrett': last})
-
-from typing import List
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 import aioredis
-import redis
 import uvicorn
 import asyncio
-import logging
-import json
 
 print("initializing")
 
-REDIS_HOST = 'localhost'
-REDIS_PORT = 7777
-XREAD_TIMEOUT = 0
-XREAD_COUNT = 100
-NUM_PREVIOUS = 30
-STREAM_MAX_LEN = 1000
-
 app = FastAPI()
 stream_name = "garrett"
-r = redis.Redis(host='localhost', port=7777)
 red = aioredis.from_url("redis://localhost:7777")
 
 html = """
