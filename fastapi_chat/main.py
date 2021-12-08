@@ -2,7 +2,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 import aioredis
-import uvicorn
 import asyncio
 
 print("initializing")
