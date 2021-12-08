@@ -73,8 +73,7 @@ html = """
     </body>
 </html>
 """
-async def async_xread(last_id):
-    return r.xread({stream_name: last_id}, block=10000)
+
 
 async def get_new_messages(websocket):
     """
@@ -82,7 +81,6 @@ async def get_new_messages(websocket):
     """
     last_id = 0
     while True:
-        #task = asyncio.create_task(async_xread(last_id))
         data = await red.xread(streams={stream_name: last_id})
         if data:
             messages = data[0][1:][0]
