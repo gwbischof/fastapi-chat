@@ -93,7 +93,7 @@ async def get_new_messages(websocket):
 async def post_new_messages(websocket):
     while True:
         message = await websocket.receive_text()
-        r.xadd(stream_name, {'message': message})
+        await red.xadd(stream_name, {'message': message})
 
 
 @app.get("/")
